@@ -2,9 +2,22 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FileText, Sparkles, Layout, Zap, ArrowRight, Github } from "lucide-react";
+import { FileText, Sparkles, Layout, Zap, ArrowRight, Github, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Session } from "@supabase/supabase-js";
 
 export default function Home() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -19,17 +32,35 @@ export default function Home() {
           </div>
           <span className="font-bold text-xl tracking-tight">AI Resume Maker</span>
         </div>
-        <div className="flex gap-4 items-center">
-          <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
-            Sign In
+        <div className="flex gap-8 items-center">
+          <Link href="/ats-check" className="hidden md:block text-sm font-semibold hover:text-primary transition-colors">
+            ATS Optimizer
           </Link>
-          <Link 
-            href="/dashboard" 
-            className="text-sm font-medium bg-foreground text-background px-4 py-2 rounded-full hover:bg-foreground/90 transition-colors"
-          >
-            Get Started
-          </Link>
+          <div className="flex gap-4 items-center">
+          {loading ? (
+            <Loader2 className="animate-spin text-muted-foreground" size={20} />
+          ) : session ? (
+            <Link 
+              href="/dashboard" 
+              className="text-sm font-medium bg-primary text-primary-foreground px-5 py-2 rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">
+                Sign In
+              </Link>
+              <Link 
+                href="/login" 
+                className="text-sm font-medium bg-foreground text-background px-4 py-2 rounded-full hover:bg-foreground/90 transition-colors"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
+      </div>
       </nav>
 
       <main className="flex-1 w-full max-w-6xl px-6 pt-32 pb-16 z-10 flex flex-col items-center text-center">

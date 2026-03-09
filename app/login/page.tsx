@@ -37,8 +37,9 @@ export default function LoginPage() {
         if (error) throw error;
         router.push("/dashboard");
       }
-    } catch (err: any) {
-      setError(err.message || "An error occurred during authentication.");
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || "An error occurred during authentication.");
     } finally {
       setLoading(false);
     }

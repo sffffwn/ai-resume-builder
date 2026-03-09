@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt }
@@ -40,8 +40,10 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("Groq API error:", errorData);
-      return NextResponse.json({ error: "Failed to generate AI content" }, { status: response.status });
+      console.error("Groq API error details:", JSON.stringify(errorData, null, 2));
+      return NextResponse.json({ 
+        error: errorData.error?.message || "Failed to generate AI content" 
+      }, { status: response.status });
     }
 
     const data = await response.json();

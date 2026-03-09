@@ -93,16 +93,68 @@ body {
 
 /* Print Styles for Resume Export */
 @media print {
-  body {
-    background: transparent !important;
-    background-color: white !important;
-    color: black !important;
-  }
-  @page {
-    margin: 0;
-    size: letter portrait;
-  }
-  .no-print {
+  /* Hide UI elements */
+  header, 
+  nav, 
+  aside, 
+  footer, 
+  button, 
+  .no-print,
+  .no-print *,
+  [role="complementary"] {
     display: none !important;
+  }
+
+  /* Reset layout for printing */
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Force the resume preview to occupy the whole page */
+  main > div {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    height: auto !important;
+  }
+
+  /* Hide the form container side */
+  main > div:first-child {
+    display: none !important;
+  }
+
+  /* Ensure the preview container is full width */
+  main > div:last-child {
+    width: 100% !important;
+    background: white !important;
+  }
+
+  #resume-preview {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    min-height: 0 !important;
+  }
+
+  @page {
+    margin: 0.5in;
+    size: auto;
   }
 }

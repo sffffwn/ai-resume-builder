@@ -4,12 +4,71 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { Plus, Trash2, Wand2, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function ResumeForm({ resumeData, onChange }: { resumeData: any, onChange: (data: any) => void }) {
+interface ResumeValues {
+  personal_info: {
+    firstName: string;
+    lastName: string;
+    jobTitle: string;
+    email: string;
+    phone: string;
+    location: string;
+    linkedin: string;
+    website: string;
+  };
+  summary: string;
+  experience: Array<{
+    title: string;
+    company: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }>;
+  education: Array<{
+    school: string;
+    degree: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }>;
+  skills: string;
+}
+
+interface Resume {
+  id: string;
+  personal_info: {
+    firstName: string;
+    lastName: string;
+    jobTitle: string;
+    email: string;
+    phone: string;
+    location: string;
+    linkedin: string;
+    website: string;
+  };
+  summary: string;
+  experience: Array<{
+    title: string;
+    company: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }>;
+  education: Array<{
+    school: string;
+    degree: string;
+    startDate: string;
+    endDate: string;
+    description: string;
+  }>;
+  skills: string;
+}
+
+export default function ResumeForm({ resumeData, onChange }: { resumeData: Resume, onChange: (data: ResumeValues) => void }) {
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [generatingSkills, setGeneratingSkills] = useState(false);
   const [generatingExp, setGeneratingExp] = useState<number | null>(null);
 
-  const { register, control, watch, reset, getValues, setValue } = useForm({
+  const { register, control, watch, reset, getValues, setValue } = useForm<ResumeValues>({
     defaultValues: {
       personal_info: {
         firstName: resumeData.personal_info?.firstName || "",
@@ -32,7 +91,7 @@ export default function ResumeForm({ resumeData, onChange }: { resumeData: any, 
   const { fields: eduFields, append: eduAppend, remove: eduRemove } = useFieldArray({ control, name: "education" });
 
   useEffect(() => {
-    const subscription = watch((value) => onChange(value));
+    const subscription = watch((value) => onChange(value as ResumeValues));
     return () => subscription.unsubscribe();
   }, [watch, onChange]);
 
@@ -44,7 +103,7 @@ export default function ResumeForm({ resumeData, onChange }: { resumeData: any, 
       education: resumeData.education?.length ? resumeData.education : [{ school: "", degree: "", startDate: "", endDate: "", description: "" }],
       skills: resumeData.skills || "",
     });
-  }, [resumeData.id]);
+  }, [resumeData.id, reset]);
 
   const generateAI = async (type: string, prompt: string, setter: (val: string) => void, setLoading: (val: boolean) => void) => {
     try {
@@ -58,8 +117,9 @@ export default function ResumeForm({ resumeData, onChange }: { resumeData: any, 
       if (!res.ok) throw new Error(data.error);
       setter(data.result);
       onChange(getValues());
-    } catch (e: any) {
-      alert("AI Generation failed: " + e.message);
+    } catch (e: unknown) {
+      const error = e as Error;
+      alert("AI Generation failed: " + error.message);
     } finally {
       setLoading(false);
     }

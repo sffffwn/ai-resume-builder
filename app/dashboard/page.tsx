@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { Plus, FileText, Calendar, Trash2, Loader2 } from "lucide-react";
+import { Plus, FileText, Calendar, Trash2, Loader2, Pencil, Check, X } from "lucide-react";
+
+interface Resume {
+  id: string;
+  title: string;
+  updated_at: string;
+}
 
 export default function DashboardPage() {
-  const [resumes, setResumes] = useState<any[]>([]);
+  const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const router = useRouter();
 
-  useEffect(() => {
-    fetchResumes();
-  }, []);
-
-  const fetchResumes = async () => {
-    setLoading(true);
+  const fetchResumes = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       const { data, error } = await supabase
@@ -30,7 +33,12 @@ export default function DashboardPage() {
       }
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchResumes();
+  }, [fetchResumes]);
 
   const createNewResume = async () => {
     setCreating(true);
@@ -51,7 +59,11 @@ export default function DashboardPage() {
     if (data && !error) {
       router.push(`/builder/${data.id}`);
     } else {
-      alert("Failed to create resume.");
+      console.error("Create resume error:", error);
+      const message = error?.code === "42P01" 
+        ? "The 'resumes' table does not exist. Please run the SQL schema in your Supabase SQL Editor."
+        : error?.message || "Failed to create resume.";
+      alert(message);
       setCreating(false);
     }
   };
@@ -63,6 +75,21 @@ export default function DashboardPage() {
       setResumes(resumes.filter(r => r.id !== id));
     } else {
       alert("Failed to delete resume.");
+    }
+  };
+
+  const updateResumeTitle = async (id: string) => {
+    if (!editTitle.trim()) return;
+    const { error } = await supabase
+      .from("resumes")
+      .update({ title: editTitle })
+      .eq("id", id);
+    
+    if (!error) {
+      setResumes(resumes.map(r => r.id === id ? { ...r, title: editTitle } : r));
+      setRenamingId(null);
+    } else {
+      alert("Failed to rename resume.");
     }
   };
 
@@ -117,17 +144,59 @@ export default function DashboardPage() {
                 <div className="bg-secondary text-secondary-foreground p-3.5 rounded-xl group-hover:scale-110 transition-transform">
                   <FileText size={24} />
                 </div>
-                <button 
-                  onClick={() => deleteResume(resume.id)}
-                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive p-2 rounded-lg transition-colors border border-transparent hover:border-destructive/20"
-                  title="Delete Resume"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="flex gap-1">
+                  <button 
+                    onClick={() => {
+                      setRenamingId(resume.id);
+                      setEditTitle(resume.title);
+                    }}
+                    className="text-muted-foreground hover:bg-primary/10 hover:text-primary p-2 rounded-lg transition-colors border border-transparent hover:border-primary/20"
+                    title="Rename Resume"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button 
+                    onClick={() => deleteResume(resume.id)}
+                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive p-2 rounded-lg transition-colors border border-transparent hover:border-destructive/20"
+                    title="Delete Resume"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
-              <h3 className="font-semibold text-xl mb-2 line-clamp-1" title={resume.title}>
-                {resume.title || "Untitled Resume"}
-              </h3>
+              
+              {renamingId === resume.id ? (
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    autoFocus
+                    className="flex-1 bg-background border border-primary/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") updateResumeTitle(resume.id);
+                      if (e.key === "Escape") setRenamingId(null);
+                    }}
+                  />
+                  <button 
+                    onClick={() => updateResumeTitle(resume.id)}
+                    className="bg-primary text-primary-foreground p-1.5 rounded-lg shadow-sm"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button 
+                    onClick={() => setRenamingId(null)}
+                    className="bg-secondary text-secondary-foreground p-1.5 rounded-lg"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <h3 className="font-semibold text-xl mb-2 line-clamp-1" title={resume.title}>
+                  {resume.title || "Untitled Resume"}
+                </h3>
+              )}
+
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 mt-auto pt-4 border-t border-border/50">
                 <Calendar size={14} />
                 <span>Updated {new Date(resume.updated_at).toLocaleDateString()}</span>

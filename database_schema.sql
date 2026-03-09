@@ -1,5 +1,11 @@
+-- # TROUBLESHOOTING: MISSING COLUMNS ERROR
+-- If you see "Failed to save resume" or "column does not exist" errors, 
+-- RUN THESE TWO LINES in your Supabase SQL Editor:
+-- ALTER TABLE resumes ADD COLUMN IF NOT EXISTS template_id TEXT DEFAULT 'modern';
+-- ALTER TABLE resumes ADD COLUMN IF NOT EXISTS ats_report JSONB DEFAULT '{}';
+
 -- Create the resumes table
-CREATE TABLE resumes (
+CREATE TABLE IF NOT EXISTS resumes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
@@ -8,6 +14,8 @@ CREATE TABLE resumes (
   experience JSONB DEFAULT '[]'::jsonb,
   education JSONB DEFAULT '[]'::jsonb,
   skills JSONB DEFAULT '[]'::jsonb,
+  template_id TEXT DEFAULT 'modern',
+  ats_report JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
