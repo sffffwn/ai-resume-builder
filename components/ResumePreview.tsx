@@ -33,7 +33,9 @@ interface Resume {
 }
 
 export default function ResumePreview({ data }: { data: Resume }) {
-  const { personal_info, summary, experience, education, skills, template_id = "modern" } = data || {};
+  const { personal_info, summary, experience, education, template_id = "modern" } = data || {};
+  // Normalize skills to always be a string, preventing .split() crashes on new resumes
+  const skills = typeof data?.skills === "string" ? data.skills : Array.isArray(data?.skills) ? (data.skills as string[]).join(", ") : "";
 
   // Standard utility to render experience/education descriptions as bullets
   const renderList = (text: string) => {
