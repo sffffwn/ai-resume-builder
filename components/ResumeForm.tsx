@@ -96,13 +96,24 @@ export default function ResumeForm({ resumeData, onChange }: { resumeData: Resum
   }, [watch, onChange]);
 
   useEffect(() => {
-    reset({
-      personal_info: resumeData.personal_info || {},
-      summary: resumeData.summary || "",
-      experience: resumeData.experience?.length ? resumeData.experience : [{ title: "", company: "", startDate: "", endDate: "", description: "" }],
-      education: resumeData.education?.length ? resumeData.education : [{ school: "", degree: "", startDate: "", endDate: "", description: "" }],
-      skills: resumeData.skills || "",
-    });
+    if (resumeData) {
+      reset({
+        personal_info: {
+          firstName: resumeData.personal_info?.firstName || "",
+          lastName: resumeData.personal_info?.lastName || "",
+          jobTitle: resumeData.personal_info?.jobTitle || "",
+          email: resumeData.personal_info?.email || "",
+          phone: resumeData.personal_info?.phone || "",
+          location: resumeData.personal_info?.location || "",
+          linkedin: resumeData.personal_info?.linkedin || "",
+          website: resumeData.personal_info?.website || "",
+        },
+        summary: resumeData.summary || "",
+        experience: resumeData.experience?.length ? resumeData.experience : [{ title: "", company: "", startDate: "", endDate: "", description: "" }],
+        education: resumeData.education?.length ? resumeData.education : [{ school: "", degree: "", startDate: "", endDate: "", description: "" }],
+        skills: typeof resumeData.skills === "string" ? resumeData.skills : Array.isArray(resumeData.skills) ? (resumeData.skills as string[]).join(", ") : "",
+      });
+    }
   }, [resumeData.id, reset]);
 
   const generateAI = async (type: string, prompt: string, setter: (val: string) => void, setLoading: (val: boolean) => void) => {

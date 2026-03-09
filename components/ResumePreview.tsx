@@ -29,7 +29,7 @@ interface Resume {
     endDate: string;
     description: string;
   }>;
-  skills: string;
+  skills?: string | string[];
 }
 
 export default function ResumePreview({ data }: { data: Resume }) {
@@ -38,8 +38,8 @@ export default function ResumePreview({ data }: { data: Resume }) {
   const skills = typeof data?.skills === "string" ? data.skills : Array.isArray(data?.skills) ? (data.skills as string[]).join(", ") : "";
 
   // Standard utility to render experience/education descriptions as bullets
-  const renderList = (text: string) => {
-    if (!text) return null;
+  const renderList = (text: any) => {
+    if (!text || typeof text !== "string") return null;
     return (
       <div className="text-sm leading-relaxed whitespace-pre-wrap pl-2">
         {text.split('\n').map((line, i) => {

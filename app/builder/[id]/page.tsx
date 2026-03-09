@@ -46,11 +46,24 @@ interface Resume {
   updated_at: string;
 }
 
-export default function BuilderPage({ params }: { params: Promise<{ id: string }> }) {
-  const unwrappedParams = use(params);
-  const id = unwrappedParams.id;
+export default function BuilderPage({ params }: { params: any }) {
   const router = useRouter();
   const [resume, setResume] = useState<Resume | null>(null);
+  const [id, setId] = useState<string | null>(null);
+
+  // Robust params handling for Next.js 14/15 compatibility
+  useEffect(() => {
+    if (params) {
+      if (params instanceof Promise) {
+        params.then(p => setId(p.id)).catch(err => {
+          console.error("Params Promise Error:", err);
+          router.push("/dashboard");
+        });
+      } else if (params.id) {
+        setId(params.id);
+      }
+    }
+  }, [params, router]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -60,11 +73,14 @@ export default function BuilderPage({ params }: { params: Promise<{ id: string }
   const [dbWarning, setDbWarning] = useState(false);
 
   const fetchResume = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      router.push("/login");
-      return;
-    }
+    if (!id) return;
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
 
     const { data, error } = await supabase
       .from("resumes")
@@ -88,7 +104,13 @@ export default function BuilderPage({ params }: { params: Promise<{ id: string }
       setResume(formattedResume);
       setTempTitle(data.title || "Untitled Resume");
     }
-    setLoading(false);
+    } catch (err) {
+      console.error("Fetch Resume Error:", err);
+      alert("An unexpected error occurred while loading your resume.");
+      router.push("/dashboard");
+    } finally {
+      setLoading(false);
+    }
   }, [id, router]);
 
   const checkSchema = useCallback(async () => {
