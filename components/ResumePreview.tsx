@@ -1,3 +1,7 @@
+"use client";
+
+import React from "react";
+
 interface Resume {
   template_id?: string;
   personal_info: {
